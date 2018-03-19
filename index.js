@@ -3,30 +3,15 @@
  * 
  */
 
+ /** stringify  for printing objects
+  * 
+  */
 const stringify = require('stringify-object');
 const fs = require('fs');
+/** mongo db driver
+ * 
+ */
 const mongodb = require('mongodb');
-
-const custfilename = 'm3-customer-data.json';
-const adrfilename = 'm3-customer-address-data.json';
-
-var count = 1;
-
-/** 
-const jp = require('json-parse-stream');
-
-fs.createReadStream(filename)
-    .pipe(jp())
-    .on('data', (element) => {
-        console.log('next element ('+count+'): ');
-        count += 1;
-        console.log(stringify(element, {indent: '  ',
-                    singleQuotes: false}))
-    })
-    .on('end', ()=> {
-        console.log('complete');
-    })
-*/
 
 /** stream json parser
  *  breaks the file data into single objects
@@ -37,6 +22,14 @@ const parser = require('dummy-streaming-array-parser');
  * 
  */
 const Queue = require('queue-fifo');
+
+/* data files with name info and address info
+*/
+const custfilename = 'm3-customer-data.json';
+const adrfilename = 'm3-customer-address-data.json';
+
+// 
+var count = 1;
 
 /* create a parser for each of the data files
  */
@@ -55,7 +48,6 @@ var done = 0;
 var ToDoCnt = 60;
 
 //get the count to send to the data base each time from the command line...
-
 var x = Number(process.argv[2]);
 if (isNaN(x)) {
     console.log('Improper parameter....  ',process.argv[2]);
