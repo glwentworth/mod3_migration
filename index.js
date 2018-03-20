@@ -1,5 +1,6 @@
 /**
- * 
+ *  code to read and merge two json files into objects stored in a mongo 
+ *  db.  
  * 
  */
 
@@ -7,6 +8,7 @@
   * 
   */
 const stringify = require('stringify-object');
+// filesystem
 const fs = require('fs');
 /** mongo db driver
  * 
@@ -60,6 +62,7 @@ const url = 'mongodb://localhost:27017';  // Connection URI
 const dbname = 'edx-course-db';  // database to use
 const collectioname = 'bitcoin-owners';  // collection for this data
 var database;  // will contain the database info
+var collection;  // collection object
 var written  = 0;  //count total objects written
 
 /* get a client object for database use
@@ -73,12 +76,13 @@ MongoClient.connect(url, (err, client) => {
     } else {
         console.log('Connected successfully to server');
         database = client.db(dbname);
+        collection = database.collection(collectioname);
         // remove the existing data...
-        database.collection(collectioname).deleteMany({});
+        collection.deleteMany({});
         // process the new data
         getDataObjects();  
         //console.log('set timer for process q...');
-        setTimeout(processqueued);
+        setTimeout(processqueued, 200);
     }}
 )
 
@@ -91,7 +95,8 @@ function dbcontinue(result) {
         // we have more to do...
         setTimeout(processqueued);
     } else {
-        process.exit(0);
+    console.log('total items written to the db: ',written);
+    process.exit(0);
     }
 }
 
@@ -103,10 +108,10 @@ function dbcontinue(result) {
  *  callback: code that determines the continuation of the process
  */
 function insertDocuments(database, collectioname, documents, callback) {
-    database.collection(collectioname).insert(documents, (error, result) => {
+    collection.insert(documents, (error, result) => {
         if (error) return process.exit(1);
 
-        console.log('Inserted '+result.result.n+' items into the '+collectioname+' collection')
+        //console.log('Inserted '+result.result.n+' items into the '+collectioname+' collection')
         callback(result);
     } );
 }
@@ -119,13 +124,12 @@ function insertDocuments(database, collectioname, documents, callback) {
 function processqueued() {
     var item = new Object;
     var outputcnt = 0;
-    var dbstuff = new Array(ToDoCnt);
-    var dbitem = 0;
+    
  
     var acnt = adrq.size();
     var ccnt = custq.size();
 
-    console.log ('customer q is:',ccnt, " adress q is: ", acnt);
+    //console.log ('customer q size:',ccnt, " adress q size: ", acnt);
 
     outputcnt = Math.min(acnt, ccnt);
 
@@ -138,8 +142,9 @@ function processqueued() {
     }
     if (outputcnt >= ToDoCnt) {
         outputcnt = ToDoCnt;
+        var dbstuff = new Array(outputcnt);
+        var dbitem = 0;
 
-        dbitem = 0;
         while (dbitem < outputcnt) {
             // clear any old data
             dbstuff[dbitem] = {};
@@ -153,9 +158,11 @@ function processqueued() {
             dbitem += 1;
             written += 1;
         }
+        //console.log('inserting: ',dbitem, ' items');
+
         // this writes to the db ....
         insertDocuments(database, collectioname, dbstuff, dbcontinue);
-   }
+    }
 }
 
 /** functions to parse the data failes into objects
@@ -186,4 +193,5 @@ function getDataObjects() {
         })
 }
 
-/** done */
+/* end of file
+ */
